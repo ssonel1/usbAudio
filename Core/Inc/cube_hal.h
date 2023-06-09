@@ -26,14 +26,14 @@
 #define USB_IRQHandler OTG_FS_IRQHandler
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx.h"
-#include "stm32xx_it.h"
-#include "stm32f4xx_nucleo.h"
+#include "stm32f4xx_it.h"
+//#include "stm32f4xx_nucleo.h"		//kapatıldı
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "usbd_audio_in.h"
 #include "usbd_audio_if.h"
-#include "audio_application.h"
-#include "cca02m2_audio.h"
+//#include "audio_application.h"	//kapatıldı
+//#include "cca02m2_audio.h"		//kapatıldı
 
 void SystemClock_Config(void);
 
