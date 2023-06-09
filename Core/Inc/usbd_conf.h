@@ -24,24 +24,8 @@
 #define __USBD_CONF_H
 
 /* Includes ------------------------------------------------------------------*/
-#ifdef USE_STM32F4XX_NUCLEO
+
 #include "stm32f4xx_hal.h"
-#endif /* USE_STM32F4XX_NUCLEO */
-#ifdef USE_STM32F0XX_NUCLEO
-#include "stm32f0xx_hal.h"
-#endif /* USE_STM32F0XX_NUCLEO */
-#ifdef USE_STM32L0XX_NUCLEO
-#include "stm32l0xx_hal.h"
-#endif /* USE_STM32L0XX_NUCLEO */
-#ifdef USE_STM32L4XX_NUCLEO
-#include "stm32l4xx_hal.h"
-#endif /* USE_STM32L4XX_NUCLEO */
-#ifdef USE_STM32F7XX_NUCLEO_144
-#include "stm32f7xx_hal.h"
-#endif /* USE_STM32F7XX_NUCLEO_144 */
-#ifdef USE_STM32F3XX_NUCLEO
-#include "stm32f3xx_hal.h"
-#endif /* USE_STM32F3XX_NUCLEO */
 
 #include <stdio.h>
 #include <stdlib.h>
