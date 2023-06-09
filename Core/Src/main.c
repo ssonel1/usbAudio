@@ -34,6 +34,8 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#define AUDIO_IN_CHANNELS 2
+#define AUDIO_IN_SAMPLING_FREQUENCY 48000
 
 /* USER CODE END PM */
 
@@ -78,7 +80,6 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
-
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -99,8 +100,8 @@ int main(void)
 
   /* Start audio acquisition and streaming */
 #ifdef DISABLE_USB_DRIVEN_ACQUISITION
-  Init_Acquisition_Peripherals(AUDIO_IN_SAMPLING_FREQUENCY, AUDIO_IN_CHANNELS, 0);
-  Start_Acquisition();
+//  Init_Acquisition_Peripherals(AUDIO_IN_SAMPLING_FREQUENCY, AUDIO_IN_CHANNELS, 0);
+//  Start_Acquisition();
 #endif
 
   /* USER CODE END 2 */

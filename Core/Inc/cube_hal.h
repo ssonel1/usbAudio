@@ -35,6 +35,8 @@
 //#include "audio_application.h"	//kapatıldı
 //#include "cca02m2_audio.h"		//kapatıldı
 
+
+#define DISABLE_USB_DRIVEN_ACQUISITION
 void SystemClock_Config(void);
 
 #endif //_CUBE_HAL_H_

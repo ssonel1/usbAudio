@@ -23,7 +23,8 @@
 #include "usbd_audio_if.h"
 
 extern uint16_t PDM_Buffer[];
-extern CCA02M2_AUDIO_Init_t MicParams;
+//extern CCA02M2_AUDIO_Init_t MicParams;
+#define BSP_ERROR_NONE		0
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -53,7 +54,7 @@ USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops =
   Audio_Resume,
   Audio_CommandMgr,
 };
-
+#define DISABLE_USB_DRIVEN_ACQUISITION
 
 /* Private functions ---------------------------------------------------------*/
 /* This table maps the audio device class setting in 1/256 dB to a
@@ -83,7 +84,7 @@ const int16_t vol_table[65] =
 static int8_t Audio_Init(uint32_t  AudioFreq, uint32_t BitRes, uint32_t ChnlNbr)
 {
 #ifndef DISABLE_USB_DRIVEN_ACQUISITION
-  return CCA02M2_AUDIO_IN_Init(CCA02M2_AUDIO_INSTANCE, &MicParams);
+  //return CCA02M2_AUDIO_IN_Init(CCA02M2_AUDIO_INSTANCE, &MicParams);
 #else
   return BSP_ERROR_NONE;
 #endif  /* DISABLE_USB_DRIVEN_ACQUISITION */
@@ -106,7 +107,7 @@ static int8_t Audio_DeInit(uint32_t options)
 static int8_t Audio_Record(void)
 {
 #ifndef DISABLE_USB_DRIVEN_ACQUISITION
-  return CCA02M2_AUDIO_IN_Record(CCA02M2_AUDIO_INSTANCE, (uint8_t *) PDM_Buffer, 0);
+  //return CCA02M2_AUDIO_IN_Record(CCA02M2_AUDIO_INSTANCE, (uint8_t *) PDM_Buffer, 0);
 #else
   return BSP_ERROR_NONE;
 #endif  /* DISABLE_USB_DRIVEN_ACQUISITION */
@@ -130,7 +131,7 @@ static int8_t Audio_VolumeCtl(int16_t Volume)
   }
   mic_instance = 0;
   /* Now do the volume adjustment */
-  return CCA02M2_AUDIO_IN_SetVolume(mic_instance, j);
+  //return CCA02M2_AUDIO_IN_SetVolume(mic_instance, j);
 }
 
 /**
@@ -152,7 +153,7 @@ static int8_t Audio_MuteCtl(uint8_t cmd)
 static int8_t Audio_Stop(void)
 {
 #ifndef DISABLE_USB_DRIVEN_ACQUISITION
-  return CCA02M2_AUDIO_IN_Stop(CCA02M2_AUDIO_INSTANCE);
+ // return CCA02M2_AUDIO_IN_Stop(CCA02M2_AUDIO_INSTANCE);
 #else
   return BSP_ERROR_NONE;
 #endif  /* DISABLE_USB_DRIVEN_ACQUISITION */
