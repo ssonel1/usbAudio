@@ -20,7 +20,7 @@
 #include "main.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "cube_hal.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,6 +40,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+USBD_HandleTypeDef hUSBDDevice;
+extern USBD_AUDIO_ItfTypeDef  USBD_AUDIO_fops;
 
 /* USER CODE END PV */
 
@@ -84,6 +86,22 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
+  /* Initialize USB descriptor basing on channels number and sampling frequency */
+  USBD_AUDIO_Init_Microphone_Descriptor(&hUSBDDevice, AUDIO_IN_SAMPLING_FREQUENCY, AUDIO_IN_CHANNELS);
+  /* Init Device Library */
+  USBD_Init(&hUSBDDevice, &AUDIO_Desc, 0);
+  /* Add Supported Class */
+  USBD_RegisterClass(&hUSBDDevice, &USBD_AUDIO);
+  /* Add Interface callbacks for AUDIO Class */
+  USBD_AUDIO_RegisterInterface(&hUSBDDevice, &USBD_AUDIO_fops);
+  /* Start Device Process */
+  USBD_Start(&hUSBDDevice);
+
+  /* Start audio acquisition and streaming */
+#ifdef DISABLE_USB_DRIVEN_ACQUISITION
+  Init_Acquisition_Peripherals(AUDIO_IN_SAMPLING_FREQUENCY, AUDIO_IN_CHANNELS, 0);
+  Start_Acquisition();
+#endif
 
   /* USER CODE END 2 */
 
