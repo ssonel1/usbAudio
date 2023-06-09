@@ -27,6 +27,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "cube_hal.h"
 
 /* USER CODE END Includes */
 
@@ -56,7 +57,7 @@ void DebugMon_Handler(void);
 void PendSV_Handler(void);
 void SysTick_Handler(void);
 /* USER CODE BEGIN EFP */
-
+void USB_IRQHandler(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
