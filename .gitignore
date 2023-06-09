@@ -58,4 +58,5 @@ dkms.conf
 #added by me later
 *.xml
 *.prefs
+Debug
 # End of https://www.toptal.com/developers/gitignore/api/c
