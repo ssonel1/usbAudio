@@ -71,18 +71,18 @@ USBD_DescriptorsTypeDef AUDIO_Desc =
 __ALIGN_BEGIN uint8_t hUSBDDeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
 {
   0x12,                       /* bLength */
-  USB_DESC_TYPE_DEVICE,       /* bDescriptorType */
-  0x00,                       /* bcdUSB */
+  USB_DESC_TYPE_DEVICE,       /* bDescriptorType (which descriptor)*/
+  0x00,                       /* bcdUSB (USB Specification: USB 2.0)*/
   0x02,
-  0x00,                       /* bDeviceClass */
-  0x00,                       /* bDeviceSubClass */
-  0x00,                       /* bDeviceProtocol */
-  USB_MAX_EP0_SIZE,           /* bMaxPacketSize*/
-  LOBYTE(USBD_VID),           /* idVendor */
+  0x00,                       /* bDeviceClass (0x00:class info in Interface Descriptor) */
+  0x00,                       /* bDeviceSubClass (in Interface Descriptor)*/
+  0x00,                       /* bDeviceProtocol (in Interface Descriptor)*/
+  USB_MAX_EP0_SIZE,           /* bMaxPacketSize(for endpoint 0)*/
+  LOBYTE(USBD_VID),           /* idVendor (vendor id)*/
   HIBYTE(USBD_VID),           /* idVendor */
-  LOBYTE(USBD_PID),           /* idVendor */
+  LOBYTE(USBD_PID),           /* idVendor (product id)*/
   HIBYTE(USBD_PID),           /* idVendor */
-  0x00,                       /* bcdDevice rel. 2.00 */
+  0x00,                       /* bcdDevice rel. 2.00 (USB Specification: USB 2.0) */
   0x02,
   USBD_IDX_MFC_STR,           /* Index of manufacturer string */
   USBD_IDX_PRODUCT_STR,       /* Index of product string */
