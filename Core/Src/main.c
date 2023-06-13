@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "cube_hal.h"
@@ -80,6 +81,7 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
+
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -88,10 +90,13 @@ int main(void)
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
   /* Initialize USB descriptor basing on channels number and sampling frequency */
+  //fill descriptors
   USBD_AUDIO_Init_Microphone_Descriptor(&hUSBDDevice, AUDIO_IN_SAMPLING_FREQUENCY, AUDIO_IN_CHANNELS);
   /* Init Device Library */
+  //init usb low level
   USBD_Init(&hUSBDDevice, &AUDIO_Desc, 0);
   /* Add Supported Class */
+  //ilk fonksiyon ile descriptorleri initialize edilen audio class, hUSBDDevice structurune veriliyor.
   USBD_RegisterClass(&hUSBDDevice, &USBD_AUDIO);
   /* Add Interface callbacks for AUDIO Class */
   USBD_AUDIO_RegisterInterface(&hUSBDDevice, &USBD_AUDIO_fops);
@@ -103,6 +108,28 @@ int main(void)
 //  Init_Acquisition_Peripherals(AUDIO_IN_SAMPLING_FREQUENCY, AUDIO_IN_CHANNELS, 0);
 //  Start_Acquisition();
 #endif
+
+  // Enable the TIM2 clock
+   RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+
+   // Configure the prescaler and auto-reload value for a 20us period
+   TIM2->PSC = 84 - 1;   // Assuming a 168MHz clock, prescaler = 168
+   TIM2->ARR = 40 - 1;  // Auto-reload value = 3360
+
+   // Enable the update interrupt
+   TIM2->DIER |= TIM_DIER_UIE;
+
+   // Enable the TIM2 interrupt in NVIC
+   NVIC_EnableIRQ(TIM2_IRQn);
+   NVIC_SetPriority(TIM2_IRQn, 0);  // Set interrupt priority (0 = highest)
+
+   // Start the timer
+   TIM2->CR1 |= TIM_CR1_CEN;
+
+
+
+
+
 
   /* USER CODE END 2 */
 
@@ -141,7 +168,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 4;
   RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 7;
+  RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -161,8 +188,6 @@ void SystemClock_Config(void)
     Error_Handler();
   }
 }
-
-
 
 /**
   * @brief GPIO Initialization Function
