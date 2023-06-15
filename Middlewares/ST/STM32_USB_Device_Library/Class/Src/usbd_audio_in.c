@@ -109,7 +109,7 @@ static void AUDIO_REQ_GetResolution(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 * @{
 */ 
 /* This dummy buffer with 0 values will be sent when there is no availble data */
-static uint8_t IsocInBuffDummy[48*4*2]; 
+static uint8_t IsocInBuffDummy[48*4*2];
 static  int16_t VOL_CUR;
 static USBD_AUDIO_HandleTypeDef haudioInstance;
 
@@ -328,75 +328,22 @@ static uint8_t  *USBD_AUDIO_GetCfgDesc (uint16_t *length)
 * @param  epnum: endpoint index
 * @retval status
 */
-volatile uint32_t test1 = 0;
-volatile uint32_t test2 = 0;
-volatile uint32_t testLen = 0;
 
+extern uint32_t sinFreq;
+extern volatile uint16_t usbBuffer[96];
+extern void generateSineForUsbAudioClass(int16_t* buffer, uint32_t sinFreq);
 static uint8_t USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
                                   uint8_t epnum)
 {
-  
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = pdev->pClassData;
-  uint32_t length_usb_pck;
-  uint16_t app;
-  uint16_t IsocInWr_app = haudio->wr_ptr;
-  uint16_t true_dim = haudio->buffer_length;
-  uint16_t packet_dim = haudio->paketDimension;
-  uint16_t channels = haudio->channels;
-  length_usb_pck = packet_dim;  
-  haudio->timeout=0;
 
-  if (epnum == (AUDIO_IN_EP & 0x7F))
-  {    
 
-    if (haudio->state == STATE_USB_IDLE) 
-    {
-      haudio->state=STATE_USB_REQUESTS_STARTED;
-      ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData[pdev->classId])->Record();      
-    }    
-    if (haudio->state == STATE_USB_BUFFER_WRITE_STARTED)   
-    {
-      haudio->rd_ptr = haudio->rd_ptr % (true_dim);              
-      if(IsocInWr_app<haudio->rd_ptr){
-        app = ((true_dim) - haudio->rd_ptr) +  IsocInWr_app;
-      }else{
-        app = IsocInWr_app - haudio->rd_ptr;
-      }        
-      if(app >= (packet_dim*haudio->upper_treshold)){       
-        length_usb_pck += channels*2;
-      }else if(app <= (packet_dim*haudio->lower_treshold)){
-        length_usb_pck -= channels*2;
-      }     
-      USBD_LL_Transmit (pdev,AUDIO_IN_EP,
-                        (uint8_t*)(&haudio->buffer[haudio->rd_ptr]),
-                        length_usb_pck);      
-      haudio->rd_ptr += length_usb_pck;      
+  generateSineForUsbAudioClass(usbBuffer, sinFreq);
+  USBD_LL_Transmit (pdev,AUDIO_IN_EP,
+		  (uint8_t*)usbBuffer,
+		  haudio->paketDimension);
 
-      if(app < haudio->buffer_length/10)
-      {
-        ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData[pdev->classId])->Stop();
-        haudio->state = STATE_USB_IDLE; 
-        haudio->timeout=0;
-        memset(haudio->buffer,0,(haudio->buffer_length + haudio->dataAmount));
-      }       
-    }
-    else 
-    {      
-    	static uint32_t prevTick = 0;
-    	if(HAL_GetTick() - prevTick >= 1000)
-    	{
-    		prevTick = HAL_GetTick();
-    		test2 = test1;
-    		test1 = 0;
-    	}
-    	test1 ++;
-    	testLen = length_usb_pck;
-      USBD_LL_Transmit (pdev,AUDIO_IN_EP,
-                        IsocInBuffDummy,
-                        length_usb_pck);      
-    }    
-  }
   return USBD_OK;
 }
 
@@ -858,17 +805,17 @@ void USBD_AUDIO_Init_Microphone_Descriptor(USBD_HandleTypeDef   *pdev, uint32_t 
   USBD_AUDIO_CfgDesc[index++] = 0x02;                                          /* bSubFrameSize */
   USBD_AUDIO_CfgDesc[index++] = 16;                                            /* bBitResolution */
   USBD_AUDIO_CfgDesc[index++] = 0x01;                                           /* bSamFreqType */
-  USBD_AUDIO_CfgDesc[index++] = samplingFrequency&0xff;                        /* tSamFreq 8000 = 0x1F40 */
+  USBD_AUDIO_CfgDesc[index++] = samplingFrequency&0xff;                        /* tSamFreq */
   USBD_AUDIO_CfgDesc[index++] = (samplingFrequency>>8)&0xff;
   USBD_AUDIO_CfgDesc[index++] = samplingFrequency>>16;   
   /* Endpoint 1 - Standard Descriptor */
   USBD_AUDIO_CfgDesc[index++] =  AUDIO_STANDARD_ENDPOINT_DESC_SIZE;            /* bLength */
   USBD_AUDIO_CfgDesc[index++] = 0x05;                                          /* bDescriptorType */
   USBD_AUDIO_CfgDesc[index++] = AUDIO_IN_EP;                                   /* bEndpointAddress 1 in endpoint*/
-  USBD_AUDIO_CfgDesc[index++] = 0x05;                                          /* bmAttributes */
+  USBD_AUDIO_CfgDesc[index++] = 0x05;                                          /* bmAttributes (asynchronous isochronous transfer)*/
   USBD_AUDIO_CfgDesc[index++] = ((samplingFrequency/1000+2)*Channels*2)&0xFF;  /* wMaxPacketSize */ 
   USBD_AUDIO_CfgDesc[index++] = ((samplingFrequency/1000+2)*Channels*2)>>8; 
-  USBD_AUDIO_CfgDesc[index++] = 0x01;                                          /* bInterval */
+  USBD_AUDIO_CfgDesc[index++] = 0x01;                                          /* bInterval(polling period) */
   USBD_AUDIO_CfgDesc[index++] = 0x00;                                          /* bRefresh */
   USBD_AUDIO_CfgDesc[index++] = 0x00;                                          /* bSynchAddress */   
   /* Endpoint - Audio Streaming Descriptor*/
