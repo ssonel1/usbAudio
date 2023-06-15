@@ -22,6 +22,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+extern uint8_t timerCallback();
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -199,23 +200,7 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /* USER CODE BEGIN 1 */
-volatile uint32_t cntTest;
-volatile uint32_t freqTest;
-void TIM2_IRQHandler(void) {
-  if (TIM2->SR & TIM_SR_UIF) {  // Check if the update interrupt flag is set
-    TIM2->SR &= ~TIM_SR_UIF;   // Clear the interrupt flag
-    // Your code here: Handle the timer interrupt
-    cntTest ++;
 
-    static uint32_t prevTick = 0;
-    if(HAL_GetTick() - prevTick >= 1)
-    {
-    	prevTick = HAL_GetTick();
-    	freqTest = cntTest;
-    	cntTest = 0;
-    }
-  }
-}
 
 /**
   * @brief  This function handles USB Handler.
