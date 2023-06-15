@@ -18,16 +18,30 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "cube_hal.h"
+#include "sineTable.h"
+#include "math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+USBD_HandleTypeDef hUSBDDevice;
+extern USBD_AUDIO_ItfTypeDef  USBD_AUDIO_fops;
 
+volatile int16_t usbBuffer[48*2];
 /* USER CODE END PTD */
+
+#define BUTTON_PIN GPIO_PIN_0
+#define BUTTON_PORT GPIOA
+
+#define DEBOUNCE_DELAY_MS 20
+
+volatile uint8_t buttonState = 0;
+
+
+
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
@@ -35,16 +49,44 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+//number of channels
 #define AUDIO_IN_CHANNELS 2
+//sampling frequency in Hz
 #define AUDIO_IN_SAMPLING_FREQUENCY 48000
+//polling period in ms
+#define HOST_POLL_REQUEST_PERIOD	1
+//time between two consecutive samples in sec
+#define TIME_BW_CONSECUTIVE_SAMPLES	(double)1 / (AUDIO_IN_SAMPLING_FREQUENCY / HOST_POLL_REQUEST_PERIOD)
+#define SINE_TABLE_SIZE 20000
+uint32_t sinFreq = 1;
+
+void generateSineForUsbAudioClass(int16_t* sineArr, uint32_t sinFreq)
+{
+	  static double t = 0;
+	  for(uint16_t i = 0; i < (AUDIO_IN_SAMPLING_FREQUENCY / (1000 / HOST_POLL_REQUEST_PERIOD)); i ++)
+	  {
+			t += TIME_BW_CONSECUTIVE_SAMPLES;
+			//channel-1
+			sineArr[i * AUDIO_IN_CHANNELS] = sineLookupTable[(uint64_t)(t * SINE_TABLE_SIZE * sinFreq) % SINE_TABLE_SIZE];
+
+			//channel-2 same signal will appear but with 180 degree phase difference
+			sineArr[i * AUDIO_IN_CHANNELS + 1] = sineLookupTable[(uint64_t)(t * SINE_TABLE_SIZE * sinFreq + (SINE_TABLE_SIZE/2)) % SINE_TABLE_SIZE];
+
+
+			//prevent overflow
+			if(t >= (double)1 / sinFreq)
+			{
+			  t -= (double) 1 / sinFreq;
+			}
+	  }
+}
 
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-USBD_HandleTypeDef hUSBDDevice;
-extern USBD_AUDIO_ItfTypeDef  USBD_AUDIO_fops;
+
 
 /* USER CODE END PV */
 
@@ -57,6 +99,7 @@ static void MX_GPIO_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
 
 /* USER CODE END 0 */
 
@@ -103,40 +146,41 @@ int main(void)
   /* Start Device Process */
   USBD_Start(&hUSBDDevice);
 
-  /* Start audio acquisition and streaming */
-#ifdef DISABLE_USB_DRIVEN_ACQUISITION
-//  Init_Acquisition_Peripherals(AUDIO_IN_SAMPLING_FREQUENCY, AUDIO_IN_CHANNELS, 0);
-//  Start_Acquisition();
-#endif
-
-  // Enable the TIM2 clock
-   RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
-
-   // Configure the prescaler and auto-reload value for a 20us period
-   TIM2->PSC = 84 - 1;   // Assuming a 168MHz clock, prescaler = 168
-   TIM2->ARR = 40 - 1;  // Auto-reload value = 3360
-
-   // Enable the update interrupt
-   TIM2->DIER |= TIM_DIER_UIE;
-
-   // Enable the TIM2 interrupt in NVIC
-   NVIC_EnableIRQ(TIM2_IRQn);
-   NVIC_SetPriority(TIM2_IRQn, 0);  // Set interrupt priority (0 = highest)
-
-   // Start the timer
-   TIM2->CR1 |= TIM_CR1_CEN;
-
-
-
-
-
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint8_t buttonStatus = 0;
   while (1)
   {
+	if ((GPIOA->IDR & GPIO_IDR_ID0) == 1)
+	{
+		// Button is pressed
+		//Debounce
+		HAL_Delay(20);
+		if ((GPIOA->IDR & GPIO_IDR_ID0) == 1)
+		{
+			if(buttonStatus == 0)
+			{
+				if(sinFreq < (SINE_TABLE_SIZE / 2))	//check for Nyquist theorem
+				{
+					sinFreq *= 2;
+				}
+				else
+				{
+					//close USB
+					USBD_Stop(&hUSBDDevice);
+				}
+				buttonStatus = 1;
+			}
+		}
+	}
+	else
+	{
+		//button released
+		buttonStatus = 0;
+	}
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -168,7 +212,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 4;
   RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
+  RCC_OscInitStruct.PLL.PLLQ = 7;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -196,10 +240,16 @@ void SystemClock_Config(void)
   */
 static void MX_GPIO_Init(void)
 {
-
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
 
+  // Enable GPIOA clock
+   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+
+   // Configure PA0 as input with pull-down
+   GPIOA->MODER &= ~GPIO_MODER_MODER0;   // Clear mode bits for PA0
+   GPIOA->PUPDR &= ~GPIO_PUPDR_PUPDR0;   // Clear pull-up/pull-down bits for PA0
+   GPIOA->PUPDR |= GPIO_PUPDR_PUPD0_1;   // Set pull-down mode for PA0
 }
 
 /* USER CODE BEGIN 4 */
