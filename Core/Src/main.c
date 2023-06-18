@@ -49,6 +49,10 @@ volatile uint8_t buttonState = 0;
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+//frequency will be doubled when button pressed
+uint32_t variableSinFreq = 1;
+
+
 //number of channels
 #define AUDIO_IN_CHANNELS 2
 //sampling frequency in Hz
@@ -58,7 +62,6 @@ volatile uint8_t buttonState = 0;
 //time between two consecutive samples in sec
 #define TIME_BW_CONSECUTIVE_SAMPLES	(double)1 / (AUDIO_IN_SAMPLING_FREQUENCY / HOST_POLL_REQUEST_PERIOD)
 #define SINE_TABLE_SIZE 20000
-uint32_t sinFreq = 1;
 
 void generateSineForUsbAudioClass(int16_t* sineArr, uint32_t sinFreq)
 {
@@ -66,18 +69,18 @@ void generateSineForUsbAudioClass(int16_t* sineArr, uint32_t sinFreq)
 	  for(uint16_t i = 0; i < (AUDIO_IN_SAMPLING_FREQUENCY / (1000 / HOST_POLL_REQUEST_PERIOD)); i ++)
 	  {
 			t += TIME_BW_CONSECUTIVE_SAMPLES;
-			//channel-1
-			sineArr[i * AUDIO_IN_CHANNELS] = sineLookupTable[(uint64_t)(t * SINE_TABLE_SIZE * sinFreq) % SINE_TABLE_SIZE];
-
-			//channel-2 same signal will appear but with 180 degree phase difference
-			sineArr[i * AUDIO_IN_CHANNELS + 1] = sineLookupTable[(uint64_t)(t * SINE_TABLE_SIZE * sinFreq + (SINE_TABLE_SIZE/2)) % SINE_TABLE_SIZE];
-
 
 			//prevent overflow
 			if(t >= (double)1 / sinFreq)
 			{
 			  t -= (double) 1 / sinFreq;
 			}
+
+			//channel-1
+			sineArr[i * AUDIO_IN_CHANNELS] = sineLookupTable[(uint64_t)(t * SINE_TABLE_SIZE * sinFreq)];
+
+			//channel-2 same signal will appear but with 180 degree phase difference
+			sineArr[i * AUDIO_IN_CHANNELS + 1] = sineLookupTable[(uint64_t)(t * SINE_TABLE_SIZE * sinFreq + (SINE_TABLE_SIZE/2)) % SINE_TABLE_SIZE];
 	  }
 }
 
@@ -162,9 +165,9 @@ int main(void)
 		{
 			if(buttonStatus == 0)
 			{
-				if(sinFreq < (SINE_TABLE_SIZE / 2))	//check for Nyquist theorem
+				if(variableSinFreq < (SINE_TABLE_SIZE / 2))	//check for Nyquist theorem
 				{
-					sinFreq *= 2;
+					variableSinFreq *= 2;
 				}
 				else
 				{

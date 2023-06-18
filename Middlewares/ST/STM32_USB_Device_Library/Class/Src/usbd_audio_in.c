@@ -329,7 +329,7 @@ static uint8_t  *USBD_AUDIO_GetCfgDesc (uint16_t *length)
 * @retval status
 */
 
-extern uint32_t sinFreq;
+extern uint32_t variableSinFreq;
 extern volatile uint16_t usbBuffer[96];
 extern void generateSineForUsbAudioClass(int16_t* buffer, uint32_t sinFreq);
 static uint8_t USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
@@ -339,7 +339,7 @@ static uint8_t USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
   haudio = pdev->pClassData;
 
 
-  generateSineForUsbAudioClass(usbBuffer, sinFreq);
+  generateSineForUsbAudioClass(usbBuffer, variableSinFreq);
   USBD_LL_Transmit (pdev,AUDIO_IN_EP,
 		  (uint8_t*)usbBuffer,
 		  haudio->paketDimension);
